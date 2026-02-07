@@ -65,3 +65,15 @@ function afterExtraction() {
   generateMCQs();
   generateTip();
 }
+function generateNotes() {
+  const sentences = extractedText.split(".").slice(0, 5);
+  let notes = "<b>📘 Notes:</b><ul>";
+
+  sentences.forEach(s => {
+    if (s.trim().length > 30)
+      notes += `<li>${s.trim()}</li>`;
+  });
+
+  notes += "</ul>";
+  addBotMessage(notes);
+}
