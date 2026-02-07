@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Study Buddy</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>📚 Student Study Buddy</h1>
+<p>Select a subject and explore study materials</p>
+
+<select id="subject">
+    <option value="Python">Python</option>
+    <option value="Web Technology">Web Technology</option>
+</select>
+
+<br><br>
+
+<button onclick="loadNotes()">📖 Show Notes</button>
+<button onclick="loadMCQs()">📝 Show MCQs</button>
+<button onclick="loadTip()">🌟 Daily Tip</button>
+<button onclick="showAll()">🤖 Study Buddy Help</button>
+<button onclick="clearOutput()">❌ Clear</button>
+
+<div id="output"></div>
+
+<footer>
+    <p>Developed by Pavani | Python + Web Technology</p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
