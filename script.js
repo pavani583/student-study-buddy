@@ -1,100 +1,67 @@
-async function loadNotes() {
-    const subject = document.getElementById("subject").value;
-    const output = document.getElementById("output");
+let extractedText = "";
 
-    const res = await fetch("data/notes.json");
-    const data = await res.json();
-
-    if (!data[subject]) {
-        output.innerHTML = "<p style='color:red'>No notes found for this subject</p>";
-        return;
-    }
-
-    let html = "<h3>📖 Notes</h3><ul>";
-    data[subject].forEach(note => {
-        html += `<li>${note}</li>`;
-    });
-    html += "</ul>";
-
-    output.innerHTML = html;
+function addBotMessage(msg) {
+  document.getElementById("chat").innerHTML +=
+    `<div class="bot">${msg}</div>`;
 }
 
-async function loadMCQs() {
-    const subject = document.getElementById("subject").value;
-    const output = document.getElementById("output");
-
-    const res = await fetch("data/mcqs.json");
-    const data = await res.json();
-
-    if (!data[subject]) {
-        output.innerHTML = "<p style='color:red'>No MCQs found</p>";
-        return;
-    }
-
-    let html = "<h3>📝 MCQs</h3>";
-    data[subject].forEach(q => {
-        html += `<p><b>${q.question}</b></p>`;
-        q.options.forEach(opt => {
-            html += `<p>• ${opt}</p>`;
-        });
-        html += `<p><i>Answer: ${q.answer}</i></p><hr>`;
-    });
-
-    output.innerHTML = html;
+function addUserMessage(msg) {
+  document.getElementById("chat").innerHTML +=
+    `<div class="user">${msg}</div>`;
 }
 
-async function loadTip() {
-    const output = document.getElementById("output");
+async function processFile() {
+  const file = document.getElementById("fileInput").files[0];
 
-    const res = await fetch("data/tips.json");
-    const tips = await res.json();
+  if (!file) {
+    addBotMessage("⚠️ Please upload a file first.");
+    return;
+  }
 
-    const randomTip = tips[Math.floor(Math.random() * tips.length)];
-    output.innerHTML = `<h3>🌟 Daily Study Tip</h3><p>${randomTip}</p>`;
+  addUserMessage("📂 Uploaded: " + file.name);
+
+  if (file.type === "application/pdf") {
+    readPDF(file);
+  } else if (file.type === "text/plain") {
+    readText(file);
+  } else {
+    addBotMessage("❌ Unsupported file type.");
+  }
 }
 
-function clearOutput() {
-    document.getElementById("output").innerHTML = "";
+function readText(file) {
+  const reader = new FileReader();
+  reader.onload = function () {
+    extractedText = reader.result;
+    afterExtraction();
+  };
+  reader.readAsText(file);
 }
 
-/* ⭐ FIXED VERSION */
-async function showAll() {
-    const subject = document.getElementById("subject").value;
-    const output = document.getElementById("output");
+async function readPDF(file) {
+  const reader = new FileReader();
+  reader.onload = async function () {
+    const typedarray = new Uint8Array(reader.result);
+    const pdf = await pdfjsLib.getDocument(typedarray).promise;
 
-    output.innerHTML = ""; // clear once
-
-    // NOTES
-    const notesRes = await fetch("data/notes.json");
-    const notesData = await notesRes.json();
-
-    if (notesData[subject]) {
-        output.innerHTML += "<h3>📖 Notes</h3><ul>";
-        notesData[subject].forEach(note => {
-            output.innerHTML += `<li>${note}</li>`;
-        });
-        output.innerHTML += "</ul>";
+    let text = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      content.items.forEach(item => {
+        text += item.str + " ";
+      });
     }
 
-    // MCQs
-    const mcqRes = await fetch("data/mcqs.json");
-    const mcqData = await mcqRes.json();
+    extractedText = text;
+    afterExtraction();
+  };
+  reader.readAsArrayBuffer(file);
+}
 
-    if (mcqData[subject]) {
-        output.innerHTML += "<h3>📝 MCQs</h3>";
-        mcqData[subject].forEach(q => {
-            output.innerHTML += `<p><b>${q.question}</b></p>`;
-            q.options.forEach(opt => {
-                output.innerHTML += `<p>• ${opt}</p>`;
-            });
-            output.innerHTML += `<p><i>Answer: ${q.answer}</i></p><hr>`;
-        });
-    }
-
-    // TIP
-    const tipRes = await fetch("data/tips.json");
-    const tips = await tipRes.json();
-
-    const randomTip = tips[Math.floor(Math.random() * tips.length)];
-    output.innerHTML += `<h3>🌟 Daily Study Tip</h3><p>${randomTip}</p>`;
+function afterExtraction() {
+  addBotMessage("✅ File read successfully!");
+  generateNotes();
+  generateMCQs();
+  generateTip();
 }
